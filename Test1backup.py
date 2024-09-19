@@ -25,7 +25,7 @@ url = "https://jsearch.p.rapidapi.com/search"
 querystring = {"query": "cybersecurity jobs on glassdoor", "page": "1", "num_pages": "1", "date_posted": "all"}
 
 headers = {
-    "x-rapidapi-key": "5a87c59c2cmsh24ea8471a41758ep15cb7bjsn258ed147e434",
+    "x-rapidapi-key": "insert your api key here",
     "x-rapidapi-host": "jsearch.p.rapidapi.com"
 }
 
