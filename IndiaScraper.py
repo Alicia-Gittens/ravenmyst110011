@@ -1,6 +1,13 @@
 import requests
 import pandas as pd
 from datetime import datetime
+import re
+
+# Helper function to remove special characters from strings
+def clean_text(text):
+    if isinstance(text, str):
+        return re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Retain only alphanumeric characters and spaces
+    return text
 
 # Step 1: Extract - Function to Extract Data from API
 def extract_data_from_api(url, headers, querystring, pages=5):
@@ -114,22 +121,22 @@ def transform_job_data(jobs):
     job_list = []
     
     for job in jobs:
-        title = job.get('job_title', 'N/A')
-        company = job.get('employer_name', 'N/A')
-        city = job.get('job_city', 'N/A')
-        state = job.get('job_state', 'N/A')
-        country = job.get('job_country', 'N/A')
+        title = clean_text(job.get('job_title', 'N/A'))
+        company = clean_text(job.get('employer_name', 'N/A'))
+        city = clean_text(job.get('job_city', 'N/A'))
+        state = clean_text(job.get('job_state', 'N/A'))
+        country = clean_text(job.get('job_country', 'N/A'))
         timestamp = job.get('job_posted_at_timestamp', None)
         date_posted = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d') if timestamp else 'N/A'
 
         # Extract Skills and Qualifications (enhanced details)
-        skills_and_qualifications = extract_skills_and_qualifications(job)
+        skills_and_qualifications = clean_text(extract_skills_and_qualifications(job))
 
         # Responsibilities and Duties combined under Responsibilities
-        responsibilities = extract_responsibilities(job)
+        responsibilities = clean_text(extract_responsibilities(job))
 
         # Experience (with improved handling of nested information)
-        experience = extract_experience(job)
+        experience = clean_text(extract_experience(job))
 
         # Full Time / Remote / Contractor / On Site status
         full_time, remote, contractor, on_site = extract_job_status(job)
@@ -175,7 +182,7 @@ def main():
         "date_posted": "all"
     }
     headers = {
-        "x-rapidapi-key": "your_key_here",
+        "x-rapidapi-key": "Your_key_here",
         "x-rapidapi-host": "jsearch.p.rapidapi.com"
     }
 
