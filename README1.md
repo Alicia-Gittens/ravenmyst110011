@@ -51,3 +51,5 @@ cybersecurity-job-etl/
 ├── README.md                   # Project documentation
 ├── requirements.txt            # List of Python dependencies
 └── cybersecurity_jobs_etl_pandas.csv  # Output file (generated after running the script)
+
+This keeps the relevant commands and examples within a single code block for each section, as per your preference. Let me know if you'd like further adjustments!
