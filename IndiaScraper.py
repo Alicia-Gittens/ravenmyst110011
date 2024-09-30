@@ -1,7 +1,8 @@
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 import re
+import time
 
 # Helper function to remove special characters from strings
 def clean_text(text):
@@ -16,15 +17,21 @@ def extract_data_from_api(url, headers, querystring, pages=5):
     # Loop through the pages
     for page in range(1, pages + 1):
         querystring["page"] = str(page)  # Update the page number
-        response = requests.get(url, headers=headers, params=querystring)
+        try:
+            response = requests.get(url, headers=headers, params=querystring)
 
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            data = response.json()  # Return the parsed JSON response
-            if 'data' in data:
-                all_jobs.extend(data['data'])
-        else:
-            print(f"Failed to retrieve data from page {page}: {response.status_code}")
+            # Check if the request was successful (status code 200)
+            if response.status_code == 200:
+                data = response.json()  # Return the parsed JSON response
+                if 'data' in data:
+                    all_jobs.extend(data['data'])
+            else:
+                print(f"Failed to retrieve data from page {page}: {response.status_code}")
+                print(f"Response content: {response.content}")  # Log the response content for further debugging
+                time.sleep(5)  # Add a longer delay between requests
+        except Exception as e:
+            print(f"Error while retrieving data from page {page}: {e}")
+            time.sleep(5)  # Ensure there's a pause before continuing
     
     return all_jobs
 
@@ -127,7 +134,7 @@ def transform_job_data(jobs):
         state = clean_text(job.get('job_state', 'N/A'))
         country = clean_text(job.get('job_country', 'N/A'))
         timestamp = job.get('job_posted_at_timestamp', None)
-        date_posted = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d') if timestamp else 'N/A'
+        date_posted = datetime.fromtimestamp(timestamp, timezone.utc).strftime('%Y-%m-%d') if timestamp else 'N/A'
 
         # Extract Skills and Qualifications (enhanced details)
         skills_and_qualifications = clean_text(extract_skills_and_qualifications(job))
@@ -164,10 +171,31 @@ def transform_job_data(jobs):
 
     return job_list
 
-# Step 3: Load - Writing Processed Data to CSV using Pandas
+# Step 2 (New): Transform - Extract Years of Experience for ExperienceV2 Column
+def extract_experience_years(experience_str):
+    if pd.isnull(experience_str):
+        return 'Unknown'
+    
+    match = re.search(r'(\d+)\s*years', experience_str)
+    if match:
+        return int(match.group(1))
+    else:
+        return 'Unknown'
+
+# Step 3: Load - Writing Processed Data to CSV using Pandas and Renaming Columns
 def load_data_to_csv(job_list, filepath):
     # Convert the list of job dictionaries into a DataFrame
     df = pd.DataFrame(job_list)
+    
+    # Rename columns by converting to lower case and replacing spaces with underscores
+    new_columns = {col: col.lower().replace(' ', '_') for col in df.columns}
+    df = df.rename(columns=new_columns)
+    
+    # Extract years of experience from the "experience" column
+    df['ExperienceV2'] = df['experience'].apply(extract_experience_years)
+
+    # Rename the "ExperienceV2" column to "years_experience"
+    df = df.rename(columns={"ExperienceV2": "years_experience"})
     
     # Export the DataFrame to a CSV file
     df.to_csv(filepath, index=False)
@@ -182,7 +210,7 @@ def main():
         "date_posted": "all"
     }
     headers = {
-        "x-rapidapi-key": "Your_key_here",
+        "x-rapidapi-key": "5a87c59c2cmsh24ea8471a41758ep15cb7bjsn258ed147e434",
         "x-rapidapi-host": "jsearch.p.rapidapi.com"
     }
 
@@ -193,7 +221,7 @@ def main():
         # Transform: Process the extracted data
         transformed_jobs = transform_job_data(raw_jobs)
 
-        # Load: Save the processed data to CSV
+        # Load: Save the processed data to CSV with renamed columns and extracted experience data
         load_data_to_csv(transformed_jobs, "C:/Users/garne/Documents/cybersecurity_jobs_etl_pandas.csv")
     else:
         print("No job data found to process.")
@@ -201,5 +229,4 @@ def main():
 # Run the main function
 if __name__ == "__main__":
     main()
-
 
