@@ -210,7 +210,7 @@ def main():
         "date_posted": "all"
     }
     headers = {
-        "x-rapidapi-key": "5a87c59c2cmsh24ea8471a41758ep15cb7bjsn258ed147e434",
+        "x-rapidapi-key": "insert_key_here",
         "x-rapidapi-host": "jsearch.p.rapidapi.com"
     }
 
